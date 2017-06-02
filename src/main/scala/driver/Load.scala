@@ -6,6 +6,7 @@ import org.apache.spark.sql._
 
 object Load {
 
+  // spark-submit --class driver.Load --master local[3] /vagrant_data/sparkkagglesantander_2.11-1.0.jar /vagrant_data/train_ver2.csv /home/spark/parsed
   def main(args: Array[String]): Unit = {
 
     val spark = SparkSession.builder()
