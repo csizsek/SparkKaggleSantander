@@ -18,6 +18,7 @@ object Aggregate {
       .appName("SparkKaggleSantander: Load")
       .master("local[*]")
       .getOrCreate()
+    import spark.implicits._
     val sc = spark.sparkContext
 
     val inputPath = args(0)
@@ -107,7 +108,32 @@ object Aggregate {
 
     val sorted = grouped.mapValues(lines => lines.toList.sortBy(line => line.date.getTime))
 
-    println(grouped.count())
+    def getOptStringMode(a: List[Option[String]]): Option[String] = {
+      val b = a.filter(e => e.isDefined)
+      if (b.isEmpty)
+        None
+      else
+        b.groupBy(i => i).mapValues(_.size).maxBy(_._2)._1
+    }
+
+    def getOptIntAvg(a: List[Option[Int]]): Option[Double] = {
+      val b = a.filter(e => e.isDefined)
+      if (b.isEmpty)
+        None
+      else
+        Option(b.map(e => e.getOrElse(0)).sum / b.length)
+    }
+
+    val aggregated = sorted.mapValues(lines => AggLine(
+      lines.map(line => line.customerCode).groupBy(i => i).mapValues(_.size).maxBy(_._2)._1,
+      lines.map(line => line.date).minBy(_.getTime),
+      lines.map(line => line.date).maxBy(_.getTime),
+      getOptStringMode(lines.map(line => line.employeeIndex)),
+      getOptIntAvg(lines.map(line => line.age))
+    ))
+
+    val aggregatedDf = aggregated.toDF()
+    aggregatedDf.write.parquet(outputPath)
   }
 }
 

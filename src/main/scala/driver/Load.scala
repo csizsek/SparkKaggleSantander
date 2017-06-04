@@ -29,7 +29,4 @@ object Load {
     val parsedDf = parsedLines.toDF()
     parsedDf.write.parquet(outputPath)
   }
-
-
-
 }
